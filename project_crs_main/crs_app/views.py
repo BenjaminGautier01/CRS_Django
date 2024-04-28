@@ -10,12 +10,10 @@ import io
 import sys
 from django.http import Http404
 
-
-
 # ------------------------
 import pandas as pd
 import yfinance as yf
-import talib
+# import talib
 import numpy as np
 import plotly.graph_objects as go
 import plotly.offline as py_off
@@ -24,21 +22,19 @@ from lightweight_charts import Chart
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 
-
 from .candles import fetch_historical_data, clean_data, identify_candlestick_patterns, plot_candlestick_chart
 from .candles import print_specific_pattern
-from .trade_proposal import fetch_tradingview_indicators_summary,fetch_live_price,trade_proposal_live_price
+from .trade_proposal import fetch_tradingview_indicators_summary, fetch_live_price, trade_proposal_live_price
 from .models import Message  # Make sure to import your Message model
 from .models import CandlestickPattern
-
 
 
 # Create your views here.
 def index(request):
     return render(request, 'index.html')
 
-def leave_message(request):
 
+def leave_message(request):
     if request.method == 'POST':
         try:
             # Retrieve data from POST request
@@ -69,10 +65,8 @@ def leave_message(request):
         except ValueError as e:
             return render(request, 'error_page.html', {'error_message': str(e)})
 
-
     # For GET requests, just display the form
     return render(request, 'index.html')
-
 
 
 def signup(request):
@@ -128,12 +122,9 @@ def signin(request):
             # Authenticate the user
             user = authenticate(request, username=email, password=password)
 
-
             if user is not None:
                 # User is successfully authenticated, get the full name
                 full_name = f"{user.first_name} {user.last_name}".strip()
-
-
 
                 request.session['user_name'] = full_name  # Store the name in session
                 login(request, user)  # Log the user in
@@ -210,7 +201,7 @@ def dashboard(request):
                 context['user_last_name'] = user_last_name
                 context['interval_choice'] = interval_choice
                 clean_symbol = symbol_choice.replace('=X', '')  # This will remove '=X' from the symbol string
-                context['symbol_choice']= clean_symbol
+                context['symbol_choice'] = clean_symbol
 
                 # You can also concatenate and send the full name
                 context['user_full_name'] = f"{user_first_name} {user_last_name}"
@@ -224,6 +215,7 @@ def dashboard(request):
 
 def chart_view(request):
     return render(request, 'dashboard.html')
+
 
 '''def dashboard(request):
     context = {}
@@ -247,6 +239,7 @@ def chart_view(request):
         context['dashboard_results'] = redirected_output.getvalue()
 
     return render(request, 'dashboard.html', context)'''
+
 
 def print_patterns(request):
     context = {}
@@ -316,6 +309,7 @@ def plot_chart(request):
             return render(request, 'error_page.html', {'error_message': str(e)})
     return render(request, 'dashboard.html', context)
 
+
 '''
 def fetch_pattern(request):
     context = {}
@@ -354,25 +348,21 @@ def trade_proposal(request):
 
             trade_proposal_result = trade_proposal_live_price(trade_proposal_symbol_choice)
 
-            #print("This is the Trade proposal section!")
-            #print_specific_pattern(patterns, pattern_choice)
-            #plot_candlestick_chart(df, patterns, specific_pattern=pattern_choice)
+            # print("This is the Trade proposal section!")
+            # print_specific_pattern(patterns, pattern_choice)
+            # plot_candlestick_chart(df, patterns, specific_pattern=pattern_choice)
 
             sys.stdout = old_stdout
             trade_proposal_symbol_choice1 = trade_proposal_symbol_choice.replace('=X', '')
             context['trade_proposal_results'] = redirected_output.getvalue()
-            context['trade_proposal_symbol_choice'] = trade_proposal_symbol_choice1  # Save symbol_choice to context to use in the template
+            context[
+                'trade_proposal_symbol_choice'] = trade_proposal_symbol_choice1  # Save symbol_choice to context to use in the template
 
         except ValueError as e:
             # Handle the error gracefully
             return render(request, 'error_page.html', {'error_message': str(e)})
 
     return render(request, 'dashboard.html', context)
-
-
-
-
-
 
 
 patterns = {
