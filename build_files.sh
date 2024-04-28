@@ -2,7 +2,7 @@
 set -e  # Exit immediately if a command exits with a non-zero status.
 
 # Setup virtual environment using Python 3.12
-python3.10 -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate
 
 # Ensure pip is available
@@ -22,4 +22,4 @@ cd /vercel/path0/project_crs_main  # Ensure this is the correct directory
 pip install -r requirements.txt
 
 # Run Django collectstatic
-python3.10 manage.py collectstatic --noinput  # Using Python 3.12 explicitly
+python3.12 manage.py collectstatic --noinput  # Using Python 3.12 explicitly
