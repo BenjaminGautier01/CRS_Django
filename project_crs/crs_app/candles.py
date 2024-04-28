@@ -1,10 +1,7 @@
+import numpy as np
 import pandas as pd
 import yfinance as yf
-import talib
-import plotly.graph_objects as go
-import mplfinance as mpf
-from bokeh.plotting import figure, show
-from bokeh.models import ColumnDataSource
+from lightweight_charts import Chart
 
 '''
 def fetch_historical_data(symbol, period, interval):
@@ -150,6 +147,8 @@ def clean_data(df):
     #print("Data cleaned successfully.")
     return df
 '''
+
+
 # -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 def fetch_historical_data(symbol, period, interval, timezone='Europe/London'):
@@ -202,8 +201,140 @@ def clean_data(df):
 
     return df
 
+
 # -----------------------------------------------------------------------------------------------------------------------------------------------------
 def identify_candlestick_patterns(df):
+    """
+    Identify various candlestick patterns using predefined functions.
+    """
+    pattern_functions = [CDLDOJI, CDLENGULFING, CDL3WHITESOLDIERS, CDL3BLACKCROWS, CDLMORNINGSTAR, CDLHARAMI_bearish,
+                         CDLHANGINGMAN]
+    pattern_data = [func(df.copy()) for func in pattern_functions]
+    patterns = pd.concat(pattern_data, axis=1)
+    return patterns
+
+
+def CDLDOJI(df, threshold=0.1):
+    """
+    Identify Doji candlestick patterns in the data.
+
+    :param df: DataFrame with price data
+    :param threshold: Threshold for considering the difference between open and close as Doji
+    :return: DataFrame with Doji column added
+    """
+    df['CDLDOJI'] = np.abs(df['close'] - df['open']) <= (threshold * (df['high'] - df['low']))
+    return df
+
+
+def CDLENGULFING(df):
+    """
+    Identify Bullish and Bearish Engulfing candlestick patterns in the data.
+
+    :param df: DataFrame with price data
+    :return: DataFrame with Engulfing columns added
+    """
+    df['CDLENGULFING'] = (df['close'].shift(1) < df['open'].shift(1)) & \
+                              (df['open'] < df['close']) & \
+                              (df['open'] < df['close'].shift(1)) & \
+                              (df['close'] > df['open'].shift(1))
+
+    df['CDLENGULFING Bearish '] = (df['open'].shift(1) < df['close'].shift(1)) & \
+                              (df['open'] > df['close']) & \
+                              (df['open'] > df['close'].shift(1)) & \
+                              (df['close'] < df['open'].shift(1))
+    return df
+
+
+def CDL3WHITESOLDIERS(df):
+    df['CDL3WHITESOLDIERS'] = (df['close'].shift(2) < df['open'].shift(2)) & \
+                                 (df['open'].shift(2) < df['close'].shift(1)) & \
+                                 (df['open'].shift(2) > df['open'].shift(1)) & \
+                                 (df['close'].shift(1) < df['close']) & \
+                                 (df['open'].shift(1) < df['close']) & \
+                                 (df['open'].shift(1) > df['open']) & \
+                                 (df['close'] > df['open']) & \
+                                 (df['high'].shift(2) == df['close'].shift(2)) & \
+                                 (df['high'].shift(1) == df['close'].shift(1)) & \
+                                 (df['high'] == df['close'])
+    return df
+
+
+def CDL3BLACKCROWS(df):
+    df['CDL3BLACKCROWS'] = (df['close'].shift(2) > df['open'].shift(2)) & \
+                              (df['open'].shift(2) > df['close'].shift(1)) & \
+                              (df['open'].shift(2) < df['open'].shift(1)) & \
+                              (df['close'].shift(1) > df['close']) & \
+                              (df['open'].shift(1) > df['close']) & \
+                              (df['open'].shift(1) < df['open']) & \
+                              (df['close'] < df['open']) & \
+                              (df['low'].shift(2) == df['close'].shift(2)) & \
+                              (df['low'].shift(1) == df['close'].shift(1)) & \
+                              (df['low'] == df['close'])
+    return df
+
+
+def CDLMORNINGSTAR(df, trend_threshold=0.5):
+    """
+    Identify Morning Star candlestick patterns in the data.
+
+    :param df: DataFrame with price data
+    :param trend_threshold: Threshold to consider the third candle's closing significant
+    :return: DataFrame with Morning Star column added
+    """
+    # First candle: black and part of a downtrend
+    first_candle = (df['close'].shift(2) < df['open'].shift(2))
+
+    # Second candle: small body, gaps down from the first candle
+    second_candle = (df['high'].shift(1) < df['low'].shift(2))
+
+    # Third candle: white, opens above the second candle, closes into the body of the first candle
+    third_candle = (df['open'] > df['close'].shift(1)) & \
+                   (df['close'] > df['open']) & \
+                   (df['close'] > df['open'].shift(2) + (
+                           df['close'].shift(2) - df['open'].shift(2)) * trend_threshold)
+
+    # Combine conditions for all three candles
+    df['CDLMORNINGSTAR'] = first_candle & second_candle & third_candle
+    return df
+
+
+def CDLHARAMI(df):
+    df['CDLHARAMI'] = (df['open'].shift(1) > df['close'].shift(1)) & \
+                           (df['close'] > df['open']) & \
+                           (df['open'] > df['close'].shift(1)) & \
+                           (df['close'] < df['open'].shift(1))
+    return df
+
+
+def CDLHARAMI_bearish(df):
+    df['CDLHARAMI_bearish'] = (df['open'].shift(1) < df['close'].shift(1)) & \
+                           (df['close'] < df['open']) & \
+                           (df['open'] < df['close'].shift(1)) & \
+                           (df['close'] > df['open'].shift(1))
+    return df
+
+
+def CDLHANGINGMAN(df, threshold=0.2):
+    """
+    Identify Hanging Man candlestick patterns in the data.
+
+    :param df: DataFrame with price data
+    :param threshold: Threshold for considering the candle as a Hanging Man
+    :return: DataFrame with Hanging Man column added
+    """
+    # Conditions for the Hanging Man
+    body = np.abs(df['close'] - df['open'])
+    upper_shadow = df['high'] - np.maximum(df['close'], df['open'])
+    lower_shadow = np.minimum(df['close'], df['open']) - df['low']
+
+    # Conditions for Hanging Man: small body, little or no upper shadow, long lower shadow
+    df['CDLHANGINGMAN'] = (body <= threshold * (df['high'] - df['low'])) & \
+                        (upper_shadow <= threshold * body) & \
+                        (lower_shadow >= (1 - threshold) * (df['high'] - df['low']))
+    return df
+
+
+'''def identify_candlestick_patterns(df):
     """
     Identify candlestick patterns using TA-Lib and return a DataFrame with these patterns flagged.
     """
@@ -215,6 +346,7 @@ def identify_candlestick_patterns(df):
         pattern_data.append(result_df)
     patterns = pd.concat(pattern_data, axis=1)
     return patterns
+'''
 
 
 def print_all_patterns(patterns):
@@ -249,6 +381,8 @@ def print_all_patterns(patterns):
     if not found:  # Check if the flag is still False after looping
         print(f"No '{trimmed_pattern_name}' was found during analysis.")
 '''
+
+
 def print_specific_pattern(patterns, specific_pattern):
     """
     Print the last 10 occurrences of a specific candlestick pattern. If fewer than 10 occurrences are found,
@@ -287,7 +421,6 @@ def plot_candlestick_chart(df, patterns, specific_pattern=None):
     chart.show(block=True)
 
 
-
 def fetch_live_price(symbol):
     """
     Fetch the live price of the given symbol using yfinance.
@@ -303,19 +436,17 @@ def fetch_live_price(symbol):
         return None
 
 
-
 # Example usage
 if __name__ == "__main__":
     symbol = "EURUSD=X"
     period = "1mo"
     interval = "5m"
-    specific_pattern = 'CDLDOJI'
+    specific_pattern = 'CDLDOJI'  # Make sure the pattern name matches the DataFrame column
 
     df = fetch_historical_data(symbol, period, interval)
     if df is not None:
         df = clean_data(df)
         patterns = identify_candlestick_patterns(df)
-        print_specific_pattern(patterns, specific_pattern)  # To print a specific pattern
+        print_specific_pattern(patterns, specific_pattern)
     else:
         print("Failed to fetch data.")
-
