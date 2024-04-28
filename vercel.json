@@ -4,7 +4,10 @@
     {
       "src": "project_crs/wsgi.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+      "config": {
+        "maxLambdaSize": "15mb",
+        "pythonVersion": "3.10.x"
+      }
     },
     {
       "src": "build_files.sh",
@@ -17,11 +20,20 @@
   "routes": [
     {
       "src": "/static/(.*)",
+      "headers": { "cache-control": "s-maxage=31536000, immutable" },
       "dest": "/static/$1"
     },
     {
       "src": "/(.*)",
       "dest": "project_crs/wsgi.py"
     }
-  ]
+  ],
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "project_crs.settings"
+  },
+  "build": {
+    "env": {
+      "DJANGO_SETTINGS_MODULE": "project_crs.settings"
+    }
+  }
 }
