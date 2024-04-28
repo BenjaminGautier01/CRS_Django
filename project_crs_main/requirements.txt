@@ -86,3 +86,4 @@ xyzservices==2024.4.0
 yarl==1.9.2
 yfinance==0.2.38
 zipp==3.17.0
+psycopg2==2.9.9
