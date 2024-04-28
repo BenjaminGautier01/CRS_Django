@@ -53,6 +53,7 @@ platformdirs==4.2.0
 plotly==5.21.0
 proxy_tools==0.1.0
 psycopg2==2.9.9
+psycopg2-binary==2.9.9
 pycares==4.4.0
 pycparser==2.22
 pyinstaller==6.1.0
