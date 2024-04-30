@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/vitualenv_crs" />
       <excludeFolder url="file://$MODULE_DIR$/MM_virtual_env" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.10" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.9 (PycharmProject)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
